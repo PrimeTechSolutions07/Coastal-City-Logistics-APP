@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coastal City Logistics — Driver App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Frame */
+    .iphone{width:380px;height:780px;border-radius:46px;background:#0b1220;padding:12px;box-shadow:0 18px 60px rgba(2,6,23,.45);border:6px solid #000}
+    .screen{border-radius:38px;overflow:hidden;background:#0a0f1a;height:100%;display:flex;flex-direction:column}
+
+    /* Brand */
+    .brand-grad{background:linear-gradient(120deg,#1e3a8a 0%, #0f766e 100%)}
+    .glass{backdrop-filter:blur(10px);background:rgba(255,255,255,.08)}
+
+    /* Cards */
+    .card{border:1px solid #1e293b;border-radius:20px;background:#111827;box-shadow:0 10px 30px rgba(0,0,0,.4);color:#f9fafb}
+
+    /* CTA buttons */
+    .cta{display:flex;align-items:center;justify-content:center;gap:.4rem; border-radius:12px; padding:10px 14px; font-weight:600; font-size:15px; letter-spacing:.3px; color:#fff; transition:all .2s ease}
+    .cta-blue{background:#2563eb; box-shadow:0 4px 12px rgba(37,99,235,.4)}
+    .cta-blue:hover{background:#1d4ed8}
+    .cta-green{background:#059669; box-shadow:0 4px 12px rgba(5,150,105,.4)}
+    .cta-green:hover{background:#047857}
+
+    /* Side menu */
+    .menu{position:absolute;top:0;left:0;width:240px;height:100%;background:#111827;box-shadow:2px 0 22px rgba(0,0,0,.6);transform:translateX(-100%);transition:transform .3s ease;z-index:60;color:#f9fafb}
+    .menu.active{transform:translateX(0)}
+    .menu a{display:block;padding:14px 18px;font-size:15px;color:#f9fafb;text-decoration:none;border-bottom:1px solid #1e293b}
+    .menu a:hover{background:#1e3a8a;color:#fff}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,.7);display:flex;align-items:center;justify-content:center;z-index:70}
+  </style>
+</head>
+<body class="min-h-screen bg-slate-900 p-6 relative text-slate-100">
+  <!-- Side menu -->
+  <div id="sideMenu" class="menu">
+    <a href="#" onclick="showHome()">🏠 Home</a>
+    <a href="#" onclick="notifyStatus('AVL')">✅ Status: AVL</a>
+    <a href="#" onclick="notifyStatus('BREAKDOWN')">🛠 Status: Breakdown</a>
+    <a href="#" onclick="notifyStatus('LUNCH')">🍔 Status: Lunch</a>
+  </div>
+
+  <main class="max-w-5xl mx-auto flex justify-center">
+    <div class="iphone relative">
+      <div class="screen">
+        <!-- Top bar -->
+        <div class="brand-grad text-white flex items-center justify-between px-4 py-3">
+          <button id="menuBtn" class="text-2xl font-bold">☰</button>
+          <div class="flex items-center gap-2">
+            <div class="h-8 w-8 rounded-xl bg-white/20 flex items-center justify-center text-sm font-bold">CC</div>
+            <div class="text-sm font-medium">Coastal City Logistics</div>
+          </div>
+          <div class="text-xs text-white/90">LTE • 100%</div>
+        </div>
+
+        <!-- HOME PAGE -->
+        <section id="sec-home" class="flex-1 flex flex-col justify-center items-center p-6 space-y-6 bg-slate-900">
+          <div class="text-center">
+            <h1 class="text-3xl font-extrabold text-white mb-1">Welcome</h1>
+            <p class="text-slate-400">Select your driver and begin your shift</p>
+          </div>
+          <div class="card p-5 w-full max-w-sm space-y-4">
+            <label class="block text-sm font-medium text-slate-300">Driver</label>
+            <select id="driverSelect" class="w-full rounded-lg border border-slate-600 bg-slate-800 text-slate-100 px-3 py-2 text-base">
+              <option>Jorge</option>
+              <option>Omar</option>
+            </select>
+            <button id="btnBegin" class="w-full cta cta-blue">Begin Shift</button>
+          </div>
+        </section>
+
+        <!-- ASSIGNMENT PAGE -->
+        <section id="sec-assignment" class="hidden flex-1 p-6 space-y-6 bg-slate-900">
+          <div class="text-center">
+            <h2 class="text-xl font-bold text-white" id="driverName">Driver</h2>
+            <p class="text-slate-400">Your Assignments</p>
+          </div>
+
+          <div class="card p-5 space-y-4">
+            <label class="block text-xs text-slate-400">Select Assignment</label>
+            <select id="assignmentSelect" class="w-full rounded-lg border border-slate-600 bg-slate-800 text-slate-100 px-3 py-2 text-sm"></select>
+
+            <div class="grid grid-cols-2 gap-4 text-sm mt-3">
+              <div>
+                <div class="text-xs text-slate-400">From</div>
+                <div class="font-semibold" id="f_from">—</div>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400">Load In</div>
+                <div class="font-semibold" id="f_loadin">—</div>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400">Container #</div>
+                <div class="font-semibold" id="f_container">—</div>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400">Appt #</div>
+                <div class="font-semibold" id="f_appt">—</div>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400">BK #</div>
+                <div class="font-semibold" id="f_bk">—</div>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400">Window</div>
+                <div class="font-semibold" id="f_window">—</div>
+              </div>
+            </div>
+            <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 text-sm">
+              <div class="text-xs text-slate-400 mb-1">Instruction</div>
+              <div class="font-semibold" id="f_instruction">—</div>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="grid grid-cols-2 gap-4">
+            <button class="cta cta-blue" id="btnEnRoute">En Route</button>
+            <button class="cta cta-green" id="btnArrived">Arrived</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal hidden">
+    <div class="bg-slate-800 rounded-2xl shadow-xl w-80 overflow-hidden">
+      <div class="brand-grad text-white p-4 flex items-center gap-2">
+        <div class="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center font-bold">CC</div>
+        <div class="font-semibold">Coastal City Logistics</div>
+      </div>
+      <div class="p-6 text-center">
+        <div id="confirmText" class="mb-4 text-white font-semibold text-lg">Confirm action?</div>
+        <div class="flex gap-4 justify-center">
+          <button id="confirmYes" class="px-5 py-2 rounded-lg bg-blue-600 text-white font-medium shadow-md">Yes</button>
+          <button id="confirmNo" class="px-5 py-2 rounded-lg bg-slate-600 text-white font-medium">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Menu
+    const menuBtn=document.getElementById('menuBtn');
+    const sideMenu=document.getElementById('sideMenu');
+    menuBtn.addEventListener('click',()=>{sideMenu.classList.toggle('active');});
+
+    // Sections
+    const secHome=document.getElementById('sec-home');
+    const secAssign=document.getElementById('sec-assignment');
+    const driverSel=document.getElementById('driverSelect');
+    const driverName=document.getElementById('driverName');
+
+    // Assignment data
+    const assignments=[
+      { id:'CCL-4821', window:'08–09 AM', from:'BBT → Yusen Logistics (Torrance)', loadin:'YTI', container:'TCLU2948209', appt:'671867', bk:'RICFGP034400', instruction:'Chassis back to Compton yard' },
+      { id:'CCL-4827', window:'10–11 AM', from:'SSA Pier A → Maersk Depot (Carson)', loadin:'PCT', container:'MSCU8812345', appt:'A45672', bk:'BK77890', instruction:'Drop empty; pull loaded' },
+      { id:'CCL-4832', window:'01–02 PM', from:'Pier C (LB) → Target RDC (Fontana)', loadin:'TRAPAC', container:'TEMU5567890', appt:'983421', bk:'BK44210', instruction:'Seal check before exit' },
+      { id:'CCL-4840', window:'03–04 PM', from:'ITS (LB) → Amazon LGB3', loadin:'LBCT', container:'CMAU6677001', appt:'774210', bk:'BK99012', instruction:'Gate photo required' },
+    ];
+
+    const assignmentSelect=document.getElementById('assignmentSelect');
+    const fields={ from:document.getElementById('f_from'), loadin:document.getElementById('f_loadin'), container:document.getElementById('f_container'), appt:document.getElementById('f_appt'), bk:document.getElementById('f_bk'), window:document.getElementById('f_window'), instruction:document.getElementById('f_instruction') };
+
+    function populateAssignments(){
+      assignmentSelect.innerHTML = assignments.map((a,i)=>`<option value="${i}">Job #${a.id} • ${a.window}</option>`).join('');
+      setAssignment(0);
+    }
+
+    function setAssignment(idx){
+      const a = assignments[idx];
+      fields.from.textContent=a.from; fields.loadin.textContent=a.loadin; fields.container.textContent=a.container; fields.appt.textContent=a.appt; fields.bk.textContent=a.bk; fields.window.textContent=a.window; fields.instruction.textContent=a.instruction;
+    }
+
+    assignmentSelect?.addEventListener('change',e=>setAssignment(e.target.value));
+
+    document.getElementById('btnBegin').addEventListener('click',()=>{
+      driverName.textContent=driverSel.value;
+      secHome.classList.add('hidden');
+      secAssign.classList.remove('hidden');
+      populateAssignments();
+    });
+
+    // Modal controls
+    const confirmModal=document.getElementById('confirmModal');
+    const confirmText=document.getElementById('confirmText');
+    const confirmYes=document.getElementById('confirmYes');
+    const confirmNo=document.getElementById('confirmNo');
+    let pendingAction=null;
+
+    function showConfirm(action){
+      pendingAction=action;
+      confirmText.textContent=`Confirm ${action}?`;
+      confirmModal.classList.remove('hidden');
+    }
+
+    document.getElementById('btnEnRoute').addEventListener('click',()=>showConfirm('EN ROUTE'));
+    document.getElementById('btnArrived').addEventListener('click',()=>showConfirm('ARRIVED'));
+
+    confirmYes.addEventListener('click',()=>{ alert(pendingAction+" sent & logged"); confirmModal.classList.add('hidden'); });
+    confirmNo.addEventListener('click',()=>{ confirmModal.classList.add('hidden'); });
+
+    function showHome(){secAssign.classList.add('hidden');secHome.classList.remove('hidden');sideMenu.classList.remove('active');}
+    function notifyStatus(status){sideMenu.classList.remove('active');alert(status+' sent & logged');}
+  </script>
+</body>
+</html>
