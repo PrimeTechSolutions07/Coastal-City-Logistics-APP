@@ -376,23 +376,24 @@ window.addEventListener('DOMContentLoaded', function(){
 // === End robust confirmations ===
 </script>
 <script>
-// === Random prefill for Window & Instruction (Phase 3 only; non-invasive) ===
 (function(){
-  var winEl = document.getElementById('f_window');
-  var instrEl = document.getElementById('f_instruction');
-  function setIfEmpty(el, val){
-    if(!el) return;
-    var t = (el.textContent||'').trim();
-    if(!t || t === '—') el.textContent = val;
-  }
+  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   var windows = ['07–08 AM','08–09 AM','09–10 AM','10–11 AM','1–2 PM','2–3 PM'];
-  var instructions = ['Use Gate 3','Call dispatch on arrival','Drop chassis at yard','Check seals before exit','Wait for green light','Bring paperwork to office'];
+  var instructions = ['Use Gate 3','Bring paperwork to office','Call dispatch on arrival','Drop chassis at yard','Check seals before exit','Wait for dock assignment'];
+  function setByLabel(labelText, val){
+    var labels = Array.from(document.querySelectorAll('#sec-assignment .text-xs.text-slate-400'));
+    var label = labels.find(el => (el.textContent||'').trim().toLowerCase() === labelText.toLowerCase());
+    if(!label) return;
+    var valueEl = label.nextElementSibling;
+    if(!valueEl) return;
+    var current = (valueEl.textContent||'').trim();
+    if(current === '—' || current === '') valueEl.textContent = val;
+  }
   document.addEventListener('DOMContentLoaded', function(){
-    setIfEmpty(winEl, windows[Math.floor(Math.random()*windows.length)]);
-    setIfEmpty(instrEl, instructions[Math.floor(Math.random()*instructions.length)]);
+    setByLabel('Window', rand(windows));
+    setByLabel('Instruction', rand(instructions));
   });
 })();
-// === End random prefill ===
 </script>
 
 </body>
