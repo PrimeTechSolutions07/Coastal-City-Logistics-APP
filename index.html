@@ -4,118 +4,229 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Coastal City Logistics — Driver App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com">// === BK# input confirmation (minimal, non-invasive) ===
+(function(){
+  const bkInput = document.getElementById('f_bk_input');
+  const modal = document.getElementById('bkModal');
+  const valEl = document.getElementById('bkConfirmValue');
+  const btnConfirm = document.getElementById('bkConfirm');
+  const btnEdit = document.getElementById('bkEdit');
+  if(!bkInput) return;
+  function openModal(val){ valEl.textContent = val || '—'; modal.style.display='flex'; }
+  function closeModal(){ modal.style.display='none'; }
+  bkInput.addEventListener('keydown',(e)=>{ if(e.key==='Enter'&&bkInput.value.trim().length){ e.preventDefault(); openModal(bkInput.value.trim()); }});
+  bkInput.addEventListener('blur',()=>{ const v=bkInput.value.trim(); if(v){ openModal(v);} });
+  btnEdit&&btnEdit.addEventListener('click',()=>{ closeModal(); bkInput.focus(); bkInput.select(); });
+  btnConfirm&&btnConfirm.addEventListener('click',()=>{ closeModal(); try{ const t=document.createElement('div'); t.textContent='BK # saved'; t.className='fixed bottom-6 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-xl shadow'; document.body.appendChild(t); setTimeout(()=>t.remove(),1200);}catch(e){} });
+})();
+// === End BK# confirmation ===
+
+// === Hide employee badge on Phase 3 (Assignment) ===
+(function(){
+  const badge = document.querySelector('.id-badge');
+  const secAssign = document.getElementById('sec-assignment');
+  if(!badge || !secAssign) return;
+  function syncBadge(){
+    const assignVisible = !secAssign.classList.contains('hidden');
+    // hide entirely on Phase 3
+    if(assignVisible){ badge.style.display = 'none'; }
+    else { aTitle.textContent='Confirm Arrived?'; aText.textContent=''; }
+  }
+  // initial
+  syncBadge();
+  // observe section visibility changes
+  const obs = new MutationObserver(syncBadge);
+  obs.observe(secAssign, {attributes:true, attributeFilter:['class']});
+  // also re-sync on page interactions
+  document.addEventListener('click', ()=> setTimeout(syncBadge, 0), true);
+})();
+// === End hide badge ===
+
+
+// === Phase 3 confirmations + demo fill ===
+window.addEventListener('DOMContentLoaded', function(){
+  // Prefill (demo only)
+  const sel = document.getElementById('assignmentSelect');
+  if(sel && !sel.options.length){
+    sel.innerHTML = '<option>Job #CCL-4821 • 08–09 AM</option>';
+  }
+  const setText = (id, v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  setText('f_from', 'BBT → Yusen Logistics\n(Torrance)');
+  setText('f_loadin', 'YTI');
+  setText('f_container', 'TCLU2948209');
+  setText('f_appt', '671867');
+  setText('f_window', '08–09 AM');
+  const instr = document.getElementById('f_instruction'); if(instr) instr.textContent='Chassis back to Compton yard';
+  const bk = document.getElementById('f_bk_input'); if(bk && !bk.value) bk.value='RICFGP034400';
+
+  // Modal plumbing
+  const modal = document.getElementById('actionModal');
+  const title = document.getElementById('actionTitle');
+  const text = document.getElementById('actionText');
+  const btnCancel = document.getElementById('actionCancel');
+  const btnConfirm = document.getElementById('actionConfirm');
+  const btnEnRoute = document.getElementById('btnEnRoute');
+  const btnArrived = document.getElementById('btnArrived');
+
+  function openModal(kind){
+    const map = { enroute: ['Confirm En Route','Mark this assignment as En Route?'],
+                  arrived: ['Confirm Arrived','Mark this assignment as Arrived?'] };
+    title.textContent = map[kind][0];
+    text.textContent  = map[kind][1];
+    btnConfirm.dataset.kind = kind;
+    modal.style.display='flex';
+  }
+  function closeModal(){ modal.style.display='none'; }
+  function toast(msg){
+    const t=document.createElement('div');
+    t.textContent=msg;
+    t.className='fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-xl border border-slate-600 shadow';
+    document.body.appendChild(t); setTimeout(()=>t.remove(),1500);
+  }
+
+  if(btnEnRoute) btnEnRoute.addEventListener('click', (e)=>{ e.preventDefault(); openModal('enroute'); });
+  if(btnArrived) btnArrived.addEventListener('click', (e)=>{ e.preventDefault(); openModal('arrived'); });
+  if(btnCancel) btnCancel.addEventListener('click', closeModal);
+  if(btnConfirm) btnConfirm.addEventListener('click', ()=>{
+    const kind = btnConfirm.dataset.kind || 'enroute';
+    closeModal();
+    toast(kind==='enroute' ? 'Status set: En Route' : 'Status set: Arrived');
+  });
+});
+// === End confirmations + demo fill ===
+
+</script>
   <style>
-    /* Frame */
     .iphone{width:380px;height:780px;border-radius:46px;background:#0b1220;padding:12px;box-shadow:0 18px 60px rgba(2,6,23,.45);border:6px solid #000}
     .screen{border-radius:38px;overflow:hidden;background:#0a0f1a;height:100%;display:flex;flex-direction:column}
-
-    /* Brand */
     .brand-grad{background:linear-gradient(120deg,#1e3a8a 0%, #0f766e 100%)}
-    .glass{backdrop-filter:blur(10px);background:rgba(255,255,255,.08)}
-
-    /* Cards */
     .card{border:1px solid #1e293b;border-radius:20px;background:#111827;box-shadow:0 10px 30px rgba(0,0,0,.4);color:#f9fafb}
+    .cta{display:flex;align-items:center;justify-content:center;gap:.4rem; border-radius:12px; padding:12px 18px; font-weight:600; font-size:16px; letter-spacing:.3px; color:#fff; transition:all .2s ease}
+    .cta-blue{background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%); box-shadow:0 6px 16px rgba(37,99,235,.4)}
+    .cta-blue:hover{transform:translateY(-1px); box-shadow:0 10px 20px rgba(37,99,235,.55)}
+    .cta-green{background:linear-gradient(135deg,#059669 0%,#047857 100%); box-shadow:0 6px 16px rgba(5,150,105,.4)}
+    .cta-green:hover{transform:translateY(-1px); box-shadow:0 10px 20px rgba(5,150,105,.55)}
+    .fade-enter{opacity:0; transform:translateY(6px);}
+    .fade-enter-active{opacity:1; transform:translateY(0); transition:opacity .25s ease, transform .25s ease;}
 
-    /* CTA buttons */
-    .cta{display:flex;align-items:center;justify-content:center;gap:.4rem; border-radius:12px; padding:10px 14px; font-weight:600; font-size:15px; letter-spacing:.3px; color:#fff; transition:all .2s ease}
-    .cta-blue{background:#2563eb; box-shadow:0 4px 12px rgba(37,99,235,.4)}
-    .cta-blue:hover{background:#1d4ed8}
-    .cta-green{background:#059669; box-shadow:0 4px 12px rgba(5,150,105,.4)}
-    .cta-green:hover{background:#047857}
+    /* Phase 2 styling */
+    .panel{position:relative;border-radius:24px;padding:2px;background:linear-gradient(135deg,#3b82f6 0%,#06b6d4 50%,#10b981 100%);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+    .panel .inner{border-radius:22px;background:#0f172a;padding:32px;display:flex;flex-direction:column;align-items:center;gap:12px;position:relative}
+    .id-badge{position:fixed;top:26px;right:46px;background:#0b1220;color:#f8fafc;font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid #334155;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:50}
+    .driver-label{font-size:13px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#e2e8f0;margin-top:20px}
+    .driver-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:.3px;margin-top:0px};line-height:1.1
 
-    /* Side menu */
-    .menu{position:absolute;top:0;left:0;width:240px;height:100%;background:#111827;box-shadow:2px 0 22px rgba(0,0,0,.6);transform:translateX(-100%);transition:transform .3s ease;z-index:60;color:#f9fafb}
-    .menu.active{transform:translateX(0)}
-    .menu a{display:block;padding:14px 18px;font-size:15px;color:#f9fafb;text-decoration:none;border-bottom:1px solid #1e293b}
-    .menu a:hover{background:#1e3a8a;color:#fff}
+    /* Assignment header (Phase 3 fix) */
+    .assign-header{position:relative;margin-bottom:20px;text-align:center;padding-top:40px}
+    .assign-id{position:absolute;top:0;right:0;background:#1e293b;color:#f1f5f9;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid #334155}
+    .assign-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:.2px;margin:0 auto;text-align:center;display:block}
+    .assign-sub{color:#94a3b8;margin-top:6px;text-align:center;width:100%}
+  
+  /* --- Error Modal (Phase 1) --- */
+  .modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,.7);backdrop-filter:saturate(120%) blur(2px);display:none;z-index:50}
+  .modal{width:92%;max-width:560px;margin:0 auto;background:#0b1322;border:1px solid #14223a;color:#e5e7eb;
+         border-radius:28px;box-shadow:0 30px 80px rgba(0,0,0,.55);padding:28px}
+  .modal-title{font-weight:800;font-size:22px;letter-spacing:.5px;margin-bottom:10px}
+  .modal-body{font-size:18px;line-height:1.4;color:#cbd5e1}
+  .modal-actions{margin-top:22px;display:flex;justify-content:flex-start}
+  .btn-ok{background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);border:none;border-radius:14px;
+          padding:12px 22px;font-weight:700;font-size:18px;color:#fff;cursor:pointer;
+          box-shadow:0 10px 22px rgba(37,99,235,.45)}
+  .modal-overlay.show{display:flex;align-items:center;justify-content:center}
 
-    /* Modal */
-    .modal{position:fixed;inset:0;background:rgba(2,6,23,.7);display:flex;align-items:center;justify-content:center;z-index:70}
-  </style>
+.assign-header h2{margin-bottom:2px;line-height:1.1}
+.assign-sub{margin-top:0;font-size:14px}
+#sec-auth.hidden .id-badge{display:none!important}#sec-auth:not(.hidden) .id-badge{display:inline-flex!important}</style>
 </head>
 <body class="min-h-screen bg-slate-900 p-6 relative text-slate-100">
-  <!-- Side menu -->
-  <div id="sideMenu" class="menu">
-    <a href="#" onclick="showHome()">🏠 Home</a>
-    <a href="#" onclick="notifyStatus('AVL')">✅ Status: AVL</a>
-    <a href="#" onclick="notifyStatus('BREAKDOWN')">🛠 Status: Breakdown</a>
-    <a href="#" onclick="notifyStatus('LUNCH')">🍔 Status: Lunch</a>
-  </div>
-
   <main class="max-w-5xl mx-auto flex justify-center">
     <div class="iphone relative">
       <div class="screen">
-        <!-- Top bar -->
         <div class="brand-grad text-white flex items-center justify-between px-4 py-3">
-          <button id="menuBtn" class="text-2xl font-bold">☰</button>
-          <div class="flex items-center gap-2">
-            <div class="h-8 w-8 rounded-xl bg-white/20 flex items-center justify-center text-sm font-bold">CC</div>
-            <div class="text-sm font-medium">Coastal City Logistics</div>
-          </div>
+          <div class="text-sm font-semibold">Coastal City Logistics</div>
           <div class="text-xs text-white/90">LTE • 100%</div>
         </div>
 
-        <!-- HOME PAGE -->
-        <section id="sec-home" class="flex-1 flex flex-col justify-center items-center p-6 space-y-6 bg-slate-900">
+        <!-- AUTH PAGE -->
+        <section id="sec-auth" class="flex-1 flex flex-col justify-center items-center p-6 space-y-6 bg-slate-900">
           <div class="text-center">
-            <h1 class="text-3xl font-extrabold text-white mb-1">Welcome</h1>
-            <p class="text-slate-400">Select your driver and begin your shift</p>
+            <h1 class="text-3xl font-extrabold text-white mb-1">Sign In</h1>
+            <p class="text-slate-400">Enter Employee ID and PIN</p>
           </div>
-          <div class="card p-5 w-full max-w-sm space-y-4">
-            <label class="block text-sm font-medium text-slate-300">Driver</label>
-            <select id="driverSelect" class="w-full rounded-lg border border-slate-600 bg-slate-800 text-slate-100 px-3 py-2 text-base">
-              <option>Prime Tech Solutions</option>
-              <option>CCL CEO Jorge</option>
-            </select>
-            <button id="btnBegin" class="w-full cta cta-blue">Begin Shift</button>
+          <div class="card p-5 w-full max-w-sm">
+            <input id="empId" type="text" placeholder="Employee ID" autocomplete="off" autocapitalize="off" spellcheck="false"
+                   class="w-full rounded-2xl border border-slate-700 bg-slate-800/90 text-slate-100 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/60 mb-4" />
+
+            <label class="flex items-center gap-2 text-xs text-slate-400 mb-4 select-none">
+              <input id="rememberId" type="checkbox" class="appearance-none w-4 h-4 rounded border border-slate-600 checked:bg-blue-600 checked:border-blue-600"/>
+              Remember my ID on this device
+            </label>
+
+            <div class="relative mb-6">
+              <input id="pin" type="password" maxlength="4" placeholder="PIN" autocomplete="off" inputmode="numeric"
+                     class="w-full rounded-2xl border border-slate-700 bg-slate-800/90 text-slate-100 px-4 py-3 pr-10 outline-none focus:ring-2 focus:ring-blue-500/60" />
+              <button type="button" id="togglePin" class="absolute inset-y-0 right-3 flex items-center" aria-label="Toggle PIN">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-6 h-6 text-slate-300">
+                  <path d="M2 12c2.3-4 6-6.5 10-6.5s7.7 2.5 10 6.5c-2.3 4-6 6.5-10 6.5S4.3 16 2 12z" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3.2"/>
+                </svg>
+              </button>
+            </div>
+
+            <button id="btnVerify" type="button" class="w-full cta cta-blue">Verify</button>
+          </div>
+        </section>
+
+        <!-- SHIFT PAGE -->
+        <section id="sec-shift" class="hidden flex-1 flex flex-col justify-center items-center p-6 space-y-6 bg-slate-900">
+          <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-white">Welcome</h2>
+            <p class="text-slate-400">Begin your shift</p>
+          </div>
+
+          <div class="panel w-full max-w-sm">
+            <div class="inner">
+              <div class="id-badge" id="lblEmpId">53939</div>
+              <div class="driver-label">Driver</div>
+              <div id="lblEmpName" class="driver-name">Prime Tech Solutions</div>
+              <button id="btnBegin" type="button" class="w-full cta cta-blue">Begin Shift</button>
+            </div>
           </div>
         </section>
 
         <!-- ASSIGNMENT PAGE -->
         <section id="sec-assignment" class="hidden flex-1 p-6 space-y-6 bg-slate-900">
-          <div class="text-center">
-            <h2 class="text-xl font-bold text-white" id="driverName">Driver</h2>
-            <p class="text-slate-400">Your Assignments</p>
+          <div class="assign-header">
+            <h2 class="assign-name" id="assignHeader">Prime Tech Solutions</h2>
+            <p class="assign-sub">Your Assignments</p>
           </div>
-
           <div class="card p-5 space-y-4">
-            <label class="block text-xs text-slate-400">Select Assignment</label>
-            <select id="assignmentSelect" class="w-full rounded-lg border border-slate-600 bg-slate-800 text-slate-100 px-3 py-2 text-sm"></select>
-
-            <div class="grid grid-cols-2 gap-4 text-sm mt-3">
-              <div>
-                <div class="text-xs text-slate-400">From</div>
-                <div class="font-semibold" id="f_from">—</div>
-              </div>
-              <div>
-                <div class="text-xs text-slate-400">Load In</div>
-                <div class="font-semibold" id="f_loadin">—</div>
-              </div>
-              <div>
-                <div class="text-xs text-slate-400">Container #</div>
-                <div class="font-semibold" id="f_container">—</div>
-              </div>
-              <div>
-                <div class="text-xs text-slate-400">Appt #</div>
-                <div class="font-semibold" id="f_appt">—</div>
-              </div>
-              <div>
-                <div class="text-xs text-slate-400">BK #</div>
-                <div class="font-semibold" id="f_bk">—</div>
-              </div>
-              <div>
-                <div class="text-xs text-slate-400">Window</div>
-                <div class="font-semibold" id="f_window">—</div>
-              </div>
-            </div>
-            <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 text-sm">
-              <div class="text-xs text-slate-400 mb-1">Instruction</div>
-              <div class="font-semibold" id="f_instruction">—</div>
-            </div>
+<select id="assignmentSelect" class="w-full rounded-lg border border-slate-600 bg-slate-800 text-slate-100 px-3 py-2 text-sm"></select>
+            <div class="grid grid-cols-2 gap-3 text-sm mt-1">
+  <div class="bg-slate-800 rounded-xl p-2 border border-slate-600 shadow-sm">
+    <div class="text-xs text-slate-400 mb-1">From</div>
+    <div class="font-semibold" id="f_from">—</div>
+  </div>
+  <div class="bg-slate-800 rounded-xl p-2 border border-slate-600 shadow-sm">
+    <div class="text-xs text-slate-400 mb-1">To</div>
+    <div class="font-semibold" id="f_loadin">—</div>
+  </div>
+  <div class="bg-slate-800 rounded-xl p-2 border border-slate-600 shadow-sm">
+    <div class="text-xs text-slate-400 mb-1">Container #</div>
+    <div class="font-semibold" id="f_container">—</div>
+  </div>
+  <div class="bg-slate-800 rounded-xl p-2 border border-slate-600 shadow-sm">
+    <div class="text-xs text-slate-400 mb-1">LOAD / EMPTY</div>
+    <div class="font-semibold" id="f_appt">—</div>
+  </div>
+  <div class="bg-slate-800 rounded-xl p-2 border border-slate-600 shadow-sm"><div class="text-xs text-slate-400 mb-1">BK # / PIN</div><input id="f_bk_input" type="text" inputmode="numeric" pattern="\d*" class="bk-input w-full font-semibold bg-transparent text-slate-100 focus:outline-none focus:ring-0" placeholder="Enter BK #"/></div>
+  <div class="bg-slate-800 rounded-xl p-2 border border-slate-600 shadow-sm">
+    <div class="text-xs text-slate-400 mb-1">Window</div>
+    <div class="font-semibold" id="f_window">—</div>
+  </div>
+</div>
+            <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 text-sm"><div class="text-xs text-slate-400 mb-1">Instruction</div><div class="font-semibold" id="f_instruction">—</div></div>
           </div>
-
-          <!-- Action buttons -->
           <div class="grid grid-cols-2 gap-4">
             <button class="cta cta-blue" id="btnEnRoute">En Route</button>
             <button class="cta cta-green" id="btnArrived">Arrived</button>
@@ -123,88 +234,166 @@
         </section>
       </div>
     </div>
-  </main>
-
-  <!-- Confirmation Modal -->
-  <div id="confirmModal" class="modal hidden">
-    <div class="bg-slate-800 rounded-2xl shadow-xl w-80 overflow-hidden">
-      <div class="brand-grad text-white p-4 flex items-center gap-2">
-        <div class="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center font-bold">CC</div>
-        <div class="font-semibold">Coastal City Logistics</div>
-      </div>
-      <div class="p-6 text-center">
-        <div id="confirmText" class="mb-4 text-white font-semibold text-lg">Confirm action?</div>
-        <div class="flex gap-4 justify-center">
-          <button id="confirmYes" class="px-5 py-2 rounded-lg bg-blue-600 text-white font-medium shadow-md">Yes</button>
-          <button id="confirmNo" class="px-5 py-2 rounded-lg bg-slate-600 text-white font-medium">No</button>
-        </div>
-      </div>
+  
+<!-- Error Modal -->
+<div id="errOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="errTitle">
+  <div class="modal">
+    <div id="errTitle" class="modal-title">ERROR</div>
+    <div id="errMsg" class="modal-body">Incorrect ID or PIN. 4 attempts remaining before lock.</div>
+    <div class="modal-actions">
+      <button id="errOk" class="btn-ok" type="button">OK</button>
     </div>
   </div>
+</div>
+</main>
 
   <script>
-    // Menu
-    const menuBtn=document.getElementById('menuBtn');
-    const sideMenu=document.getElementById('sideMenu');
-    menuBtn.addEventListener('click',()=>{sideMenu.classList.toggle('active');});
+    /* === SAFEGUARD: Multi-user extension (non-invasive) === */const CORRECT_ID='53939';const CORRECT_PIN='9999';const EMPLOYEE_NAMES={ '53939':'Prime Tech Solutions','54545':'CCL CEO Jorge' };const ALLOWED_IDS=['53939','54545'];const PIN_MAP={'53939':'9999','54545':'0000'};/* === End safeguard block === */
+    const secAuth=document.getElementById('sec-auth');const secShift=document.getElementById('sec-shift');const secAssign=document.getElementById('sec-assignment');
+    const empIdInput=document.getElementById('empId');const rememberId=document.getElementById('rememberId');const pinField=document.getElementById('pin');const togglePin=document.getElementById('togglePin');const btnVerify=document.getElementById('btnVerify');
+    const lblEmpId=document.getElementById('lblEmpId');const lblEmpName=document.getElementById('lblEmpName');const assignHeader=document.getElementById('assignHeader');const assignEmpId=document.getElementById('assignEmpId');
+    togglePin.addEventListener('click',()=>{pinField.type=pinField.type==='password'?'text':'password'});
 
-    // Sections
-    const secHome=document.getElementById('sec-home');
-    const secAssign=document.getElementById('sec-assignment');
-    const driverSel=document.getElementById('driverSelect');
-    const driverName=document.getElementById('driverName');
+    const storedId=localStorage.getItem('ccl_emp_id');if(storedId){empIdInput.value=storedId;rememberId.checked=true}
+    sessionStorage.removeItem('attemptsUsed');sessionStorage.removeItem('locked');
 
-    // Assignment data
-    const assignments=[
-      { id:'CCL-4821', window:'08–09 AM', from:'BBT → Yusen Logistics (Torrance)', loadin:'YTI', container:'TCLU2948209', appt:'671867', bk:'RICFGP034400', instruction:'Chassis back to Compton yard' },
-      { id:'CCL-4827', window:'10–11 AM', from:'SSA Pier A → Maersk Depot (Carson)', loadin:'PCT', container:'MSCU8812345', appt:'A45672', bk:'BK77890', instruction:'Drop empty; pull loaded' },
-      { id:'CCL-4832', window:'01–02 PM', from:'Pier C (LB) → Target RDC (Fontana)', loadin:'TRAPAC', container:'TEMU5567890', appt:'983421', bk:'BK44210', instruction:'Seal check before exit' },
-      { id:'CCL-4840', window:'03–04 PM', from:'ITS (LB) → Amazon LGB3', loadin:'LBCT', container:'CMAU6677001', appt:'774210', bk:'BK99012', instruction:'Gate photo required' },
-    ];
+    
+  /* --- Error Modal helpers --- */
+  function openError(message){
+    document.getElementById('errTitle').textContent = 'ERROR';
+    document.getElementById('errMsg').textContent = message;
+    document.getElementById('errOverlay').classList.add('show');
+  }
+  function closeError(){
+    document.getElementById('errOverlay').classList.remove('show');
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    const okBtn = document.getElementById('errOk');
+    const ovl = document.getElementById('errOverlay');
+    okBtn.addEventListener('click', closeError);
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && ovl.classList.contains('show')) closeError(); });
+  });
 
-    const assignmentSelect=document.getElementById('assignmentSelect');
-    const fields={ from:document.getElementById('f_from'), loadin:document.getElementById('f_loadin'), container:document.getElementById('f_container'), appt:document.getElementById('f_appt'), bk:document.getElementById('f_bk'), window:document.getElementById('f_window'), instruction:document.getElementById('f_instruction') };
+  const MAX_ATTEMPTS=5;let attemptsUsed=0;let locked=false;
+    function setLocked(){locked=true;sessionStorage.setItem('locked','1');openError('LOCKED — Call Dispatch.');empIdInput.disabled=true;pinField.disabled=true;btnVerify.disabled=true}
 
-    function populateAssignments(){
-      assignmentSelect.innerHTML = assignments.map((a,i)=>`<option value="${i}">Job #${a.id} • ${a.window}</option>`).join('');
-      setAssignment(0);
-    }
+    function handleVerify(){if(locked)return;const id=empIdInput.value.trim();const pin=pinField.value.trim();const ok=((id===CORRECT_ID&&pin===CORRECT_PIN)||(ALLOWED_IDS.includes(id)&&pin===PIN_MAP[id]));/* SAFEGUARD */if(!ok){attemptsUsed+=1;const remaining=Math.max(0,MAX_ATTEMPTS-attemptsUsed);if(remaining<=0){setLocked();return}openError(`Incorrect ID or PIN. ${remaining} attempt${remaining===1?'':'s'} remaining before lock.`);return}if(rememberId.checked){localStorage.setItem('ccl_emp_id',id)}else{localStorage.removeItem('ccl_emp_id')}const empName=EMPLOYEE_NAMES[id]||'Employee';lblEmpId.textContent=id;lblEmpName.textContent=empName;assignHeader.textContent=empName;if(assignEmpId)assignEmpId.textContent=id;secAuth.classList.add('hidden');secShift.classList.remove('hidden')}
 
-    function setAssignment(idx){
-      const a = assignments[idx];
-      fields.from.textContent=a.from; fields.loadin.textContent=a.loadin; fields.container.textContent=a.container; fields.appt.textContent=a.appt; fields.bk.textContent=a.bk; fields.window.textContent=a.window; fields.instruction.textContent=a.instruction;
-    }
+    btnVerify.addEventListener('click',e=>{e.preventDefault();handleVerify()});pinField.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleVerify()}});empIdInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleVerify()}});
 
-    assignmentSelect?.addEventListener('change',e=>setAssignment(e.target.value));
+    const btnBegin=document.getElementById('btnBegin');btnBegin.addEventListener('click',()=>{secShift.classList.add('hidden');secAssign.classList.remove('hidden');populateAssignments()});
 
-    document.getElementById('btnBegin').addEventListener('click',()=>{
-      driverName.textContent=driverSel.value;
-      secHome.classList.add('hidden');
-      secAssign.classList.remove('hidden');
-      populateAssignments();
-    });
-
-    // Modal controls
-    const confirmModal=document.getElementById('confirmModal');
-    const confirmText=document.getElementById('confirmText');
-    const confirmYes=document.getElementById('confirmYes');
-    const confirmNo=document.getElementById('confirmNo');
-    let pendingAction=null;
-
-    function showConfirm(action){
-      pendingAction=action;
-      confirmText.textContent=`Confirm ${action}?`;
-      confirmModal.classList.remove('hidden');
-    }
-
-    document.getElementById('btnEnRoute').addEventListener('click',()=>showConfirm('EN ROUTE'));
-    document.getElementById('btnArrived').addEventListener('click',()=>showConfirm('ARRIVED'));
-
-    confirmYes.addEventListener('click',()=>{ alert(pendingAction+" sent & logged"); confirmModal.classList.add('hidden'); });
-    confirmNo.addEventListener('click',()=>{ confirmModal.classList.add('hidden'); });
-
-    function showHome(){secAssign.classList.add('hidden');secHome.classList.remove('hidden');sideMenu.classList.remove('active');}
-    function notifyStatus(status){sideMenu.classList.remove('active');alert(status+' sent & logged');}
+    const assignments=[{id:'CCL-4821',window:'08–09 AM',from:'BBT → Yusen Logistics (Torrance)',loadin:'YTI',container:'TCLU2948209',appt:'671867',bk:'RICFGP034400',instruction:'Chassis back to Compton yard'}];
+    const assignmentSelect=document.getElementById('assignmentSelect');const fields={from:document.getElementById('f_from'),loadin:document.getElementById('f_loadin'),container:document.getElementById('f_container'),appt:document.getElementById('f_appt'),bk:document.getElementById('f_bk'),window:document.getElementById('f_window'),instruction:document.getElementById('f_instruction')};
+    function populateAssignments(){assignmentSelect.innerHTML=assignments.map((a,i)=>`<option value="${i}">Job #${a.id} • ${a.window}</option>`).join('');setAssignment(0)}
+    function setAssignment(i){const a=assignments[i];fields.from.textContent=a.from;fields.loadin.textContent=a.loadin;fields.container.textContent=a.container;fields.appt.textContent=a.appt;fields.bk.textContent=a.bk;fields.window.textContent=a.window;fields.instruction.textContent=a.instruction}
+    assignmentSelect.addEventListener('change',e=>setAssignment(e.target.value));
   </script>
+<!-- BK Confirm Modal --><div id="bkModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50"><div style="background:#0f172a;border:1px solid #334155;border-radius:16px;padding:20px;width:85%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.35);color:#fff;"><h3 class="text-white text-lg font-semibold mb-1">Confirm BK #</h3><p class="text-slate-300 text-sm mb-4">Please confirm this BK number is correct:</p><div class="text-white font-bold text-xl mb-5" id="bkConfirmValue">—</div><div class="flex gap-3"><button id="bkEdit" class="flex-1 py-2 rounded-xl bg-slate-700 text-white">Edit</button><button id="bkConfirm" class="flex-1 py-2 rounded-xl bg-blue-600 text-white">Confirm</button></div></div></div>
+<!-- Action Confirm Modal -->
+<div id="actionModal" style="position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999;">
+  <div class="bg-slate-900 rounded-2xl p-5 w-[85%] max-w-sm border border-slate-700 shadow-xl">
+    <h3 class="text-white text-lg font-semibold mb-1" id="actionTitle">Confirm</h3>
+    <p class="text-slate-300 text-sm mb-5" id="actionText">Are you sure?</p>
+    <div class="flex gap-3">
+      <button id="actionCancel" class="flex-1 py-2 rounded-xl bg-slate-700 text-white">Cancel</button>
+      <button id="actionConfirm" class="flex-1 py-2 rounded-xl bg-blue-600 text-white">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === Robust confirmations for En Route / Arrived + BK# ===
+(function(){
+  function byId(id){ return document.getElementById(id); }
+  function makeModal(id, title, text){
+    let m = byId(id);
+    if(m) return m;
+    m = document.createElement('div');
+    m.id = id;
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999;';
+    m.innerHTML = '<div style="background:#0f172a;border:1px solid #334155;border-radius:16px;padding:20px;width:85%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.35);color:#fff;">'
+                  + '<h3 style="font-size:18px;font-weight:700;margin:0 0 6px 0" id="'+id+'__title">'+title+'</h3>'
+                  + '<p style="color:#cbd5e1;font-size:14px;margin:0 0 16px 0" id="'+id+'__text">'+text+'</p>'
+                  + '<div style="display:flex;gap:12px">'
+                  + '<button id="'+id+'__cancel" style="flex:1;padding:10px 0;border-radius:12px;background:#475569;color:#fff;border:none">Cancel</button>'
+                  + '<button id="'+id+'__ok" style="flex:1;padding:10px 0;border-radius:12px;background:#2563eb;color:#fff;border:none">Confirm</button>'
+                  + '</div></div>';
+    document.body.appendChild(m);
+    return m;
+  }
+  function showModal(m){ m.style.display = 'flex'; }
+  function hideModal(m){ m.style.display = 'none'; }
+  function toast(msg){
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#0f172a;color:#fff;border:1px solid #334155;padding:8px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:9999;';
+    document.body.appendChild(t); setTimeout(()=>t.remove(),1500);
+  }
+
+  // Action modal (En Route / Arrived)
+  const actionModal = makeModal('actionModal2', 'Confirm', 'Are you sure?');
+  const aTitle = byId('actionModal2__title');
+  const aText  = byId('actionModal2__text');
+  const aCancel= byId('actionModal2__cancel');
+  const aOK    = byId('actionModal2__ok');
+
+  function openAction(kind){
+    if(kind==='enroute'){ aTitle.textContent='Confirm En Route?'; aText.textContent=''; }
+    else { aTitle.textContent='Confirm Arrived?'; aText.textContent=''; }
+    aOK.dataset.kind = kind;
+    showModal(actionModal);
+  }
+  aCancel.addEventListener('click', ()=> hideModal(actionModal));
+  aOK.addEventListener('click', ()=>{ 
+    const kind = aOK.dataset.kind; hideModal(actionModal);
+    toast(kind==='enroute' ? 'Status set: En Route' : 'Status set: Arrived');
+  });
+
+  const btnEn = byId('btnEnRoute'), btnArr = byId('btnArrived');
+  if(btnEn)  btnEn.addEventListener('click', (e)=>{ e.preventDefault(); openAction('enroute'); });
+  if(btnArr) btnArr.addEventListener('click', (e)=>{ e.preventDefault(); openAction('arrived'); });
+
+  // BK confirm modal
+  const bkModal = makeModal('bkConfirmModal', 'Confirm BK #', 'Please confirm the BK number is correct.');
+  const bkText  = byId('bkConfirmModal__text');
+  const bkCancel= byId('bkConfirmModal__cancel');
+  const bkOK    = byId('bkConfirmModal__ok');
+  const bkInput = byId('f_bk_input');
+
+  function openBk(){
+    const val = (bkInput && bkInput.value || '').trim();
+    bkText.textContent = 'Confirm BK #: ' + (val || '—');
+    showModal(bkModal);
+  }
+  if(bkInput){
+    bkInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && bkInput.value.trim()){ e.preventDefault(); openBk(); } });
+    bkInput.addEventListener('blur', ()=>{ if(bkInput.value.trim()){ openBk(); } });
+  }
+  bkCancel.addEventListener('click', ()=> hideModal(bkModal));
+  bkOK.addEventListener('click', ()=>{ hideModal(bkModal); toast('BK # saved'); });
+})();
+// === End robust confirmations ===
+</script>
+<script>
+// === Random prefill for Window & Instruction (Phase 3 only; non-invasive) ===
+(function(){
+  var winEl = document.getElementById('f_window');
+  var instrEl = document.getElementById('f_instruction');
+  function setIfEmpty(el, val){
+    if(!el) return;
+    var t = (el.textContent||'').trim();
+    if(!t || t === '—') el.textContent = val;
+  }
+  var windows = ['07–08 AM','08–09 AM','09–10 AM','10–11 AM','1–2 PM','2–3 PM'];
+  var instructions = ['Use Gate 3','Call dispatch on arrival','Drop chassis at yard','Check seals before exit','Wait for green light','Bring paperwork to office'];
+  document.addEventListener('DOMContentLoaded', function(){
+    setIfEmpty(winEl, windows[Math.floor(Math.random()*windows.length)]);
+    setIfEmpty(instrEl, instructions[Math.floor(Math.random()*instructions.length)]);
+  });
+})();
+// === End random prefill ===
+</script>
+
 </body>
 </html>
