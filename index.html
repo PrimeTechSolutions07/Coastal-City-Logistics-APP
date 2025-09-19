@@ -1749,5 +1749,83 @@ html { overflow-anchor: none !important; }
   });
 })();
 </script>
+<style id="phase3-hamburger-reset">
+  /* Hard reset so remote CSS can't style the button differently */
+  #menuBtn {
+    all: unset !important;
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 2147483647 !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    border-radius: 0 !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+    pointer-events: auto !important;
+    color: #ffffff !important;
+  }
+  #menuBtn::before, #menuBtn::after { content: none !important; }
+  #menuBtn * {
+    all: unset !important;
+    display: block !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+  }
+  #menuBtn svg {
+    width: 24px !important;
+    height: 24px !important;
+    stroke: currentColor !important;
+  }
+</style>
+<script id="phase3-hamburger-reinforce">
+(function(){
+  var btn = document.getElementById('menuBtn');
+  if (!btn) return;
+
+  // Remove any passive or duplicate listeners by cloning
+  var clone = btn.cloneNode(true);
+  btn.parentNode.replaceChild(clone, btn);
+  btn = clone;
+
+  function openMenu() {
+    var sheet = document.getElementById('menuSheet');
+    if (!sheet) {
+      sheet = document.createElement('div');
+      sheet.id = 'menuSheet';
+      sheet.className = 'menu-overlay show';
+      sheet.innerHTML = '<div class="menu-backdrop"></div><div id="menuModal" class="menu-card"></div>';
+      document.body.appendChild(sheet);
+    }
+    sheet.classList.add('show');
+    sheet.classList.remove('hidden');
+    sheet.removeAttribute('hidden');
+    sheet.setAttribute('aria-hidden','false');
+  }
+
+  ['pointerdown','touchstart','click'].forEach(function(type){
+    btn.addEventListener(type, function(e){
+      e.preventDefault();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      e.stopPropagation();
+      openMenu();
+    }, {capture:true, passive:false});
+  });
+})();
+</script>
 </body>
 </html>
