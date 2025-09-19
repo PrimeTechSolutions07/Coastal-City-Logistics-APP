@@ -1659,5 +1659,95 @@ html { overflow-anchor: none !important; }
 })();
 </script>
 <!-- ====== END PHASE 2: FORCE HIDE v12.2 ====== -->
+<style id="phase3-hamburger-hotfix">
+  /* Phase 3 header container */
+  #sec-assignment .assign-header { 
+    position: relative !important; 
+    text-align: center !important;
+  }
+
+  /* Title / Driver name stays centered */
+  #sec-assignment .assign-header h1,
+  #sec-assignment .assign-header h2,
+  #sec-assignment .assign-header .driver-name {
+    margin: 2px auto 0 auto !important;
+    text-align: center !important;
+    display: inline-block !important;
+  }
+
+  /* Hamburger pinned at top-left with large tap area */
+  #menuBtn {
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    width: 44px !important;
+    height: 44px !important;
+    z-index: 2147483647 !important;
+    background: transparent !important;
+    border: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+    pointer-events: auto !important;
+  }
+  #menuBtn svg { width: 24px !important; height: 24px !important; display:block !important; }
+
+  /* Prevent header siblings from stealing taps */
+  #sec-assignment .assign-header * { pointer-events: none !important; }
+  #menuBtn, #menuBtn * { pointer-events: auto !important; }
+</style>
+<style id="phase3-layout-tune">
+  /* Slightly enlarge inner phone canvas without changing outer frame */
+  .phone-canvas, .iphone-screen, .device .screen, .phone, #app, .app-root {
+    transform: scale(1.03) !important;
+    transform-origin: top left !important;
+  }
+</style>
+<script id="phase3-hamburger-svg">
+(function(){
+  var btn = document.getElementById('menuBtn');
+  if (!btn) return;
+  if (!btn.querySelector('svg')) {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  }
+})();
+</script>
+<script id="phase3-hamburger-dedupe">
+(function(){
+  var btn = document.getElementById('menuBtn');
+  if (!btn) return;
+
+  // Remove duplicate overlays so there is only ONE #menuSheet
+  var sheets = document.querySelectorAll('#menuSheet');
+  sheets.forEach(function(el, i){ if (i) try{ el.remove(); }catch(_){ } });
+
+  function openMenu() {
+    var sheet = document.getElementById('menuSheet');
+    if (!sheet) {
+      sheet = document.createElement('div');
+      sheet.id = 'menuSheet';
+      sheet.className = 'menu-overlay show';
+      sheet.innerHTML = '<div class="menu-backdrop"></div><div id="menuModal" class="menu-card"></div>';
+      document.body.appendChild(sheet);
+    }
+    sheet.classList.add('show');
+    sheet.classList.remove('hidden');
+    sheet.removeAttribute('hidden');
+    sheet.setAttribute('aria-hidden','false');
+  }
+
+  // Bind once; block other layers from stealing the event
+  ['pointerdown','touchstart','click'].forEach(function(type){
+    btn.addEventListener(type, function(e){
+      e.preventDefault();
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      e.stopPropagation();
+      openMenu();
+    }, {capture:true, passive:false});
+  });
+})();
+</script>
 </body>
 </html>
