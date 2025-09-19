@@ -1659,195 +1659,75 @@ html { overflow-anchor: none !important; }
 })();
 </script>
 <!-- ====== END PHASE 2: FORCE HIDE v12.2 ====== -->
-<style id="phase3-hamburger-hotfix">
-  /* Phase 3 header container */
-  #sec-assignment .assign-header { 
-    position: relative !important; 
-    text-align: center !important;
-  }
-
-  /* Title / Driver name stays centered */
-  #sec-assignment .assign-header h1,
-  #sec-assignment .assign-header h2,
-  #sec-assignment .assign-header .driver-name {
-    margin: 2px auto 0 auto !important;
-    text-align: center !important;
-    display: inline-block !important;
-  }
-
-  /* Hamburger pinned at top-left with large tap area */
+<style id="hamburger_min_reset">
   #menuBtn {
-    position: absolute !important;
-    top: 10px !important;
-    left: 10px !important;
-    width: 44px !important;
-    height: 44px !important;
-    z-index: 2147483647 !important;
-    background: transparent !important;
-    border: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    -webkit-tap-highlight-color: transparent !important;
-    touch-action: manipulation !important;
-    pointer-events: auto !important;
-  }
-  #menuBtn svg { width: 24px !important; height: 24px !important; display:block !important; }
-
-  /* Prevent header siblings from stealing taps */
-  #sec-assignment .assign-header * { pointer-events: none !important; }
-  #menuBtn, #menuBtn * { pointer-events: auto !important; }
-</style>
-
-<script id="phase3-hamburger-svg">
-(function(){
-  var btn = document.getElementById('menuBtn');
-  if (!btn) return;
-  if (!btn.querySelector('svg')) {
-    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
-  }
-})();
-</script>
-<script id="phase3-hamburger-dedupe">
-(function(){
-  var btn = document.getElementById('menuBtn');
-  if (!btn) return;
-
-  // Remove duplicate overlays so there is only ONE #menuSheet
-  var sheets = document.querySelectorAll('#menuSheet');
-  sheets.forEach(function(el, i){ if (i) try{ el.remove(); }catch(_){ } });
-
-  function openMenu() {
-    var sheet = document.getElementById('menuSheet');
-    if (!sheet) {
-      sheet = document.createElement('div');
-      sheet.id = 'menuSheet';
-      sheet.className = 'menu-overlay show';
-      sheet.innerHTML = '<div class="menu-backdrop"></div><div id="menuModal" class="menu-card"></div>';
-      document.body.appendChild(sheet);
-    }
-    sheet.classList.add('show');
-    sheet.classList.remove('hidden');
-    sheet.removeAttribute('hidden');
-    sheet.setAttribute('aria-hidden','false');
-  }
-
-  // Bind once; block other layers from stealing the event
-  ['pointerdown','touchstart','click'].forEach(function(type){
-    btn.addEventListener(type, function(e){
-      e.preventDefault();
-      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-      e.stopPropagation();
-      openMenu();
-    }, {capture:true, passive:false});
-  });
-})();
-</script>
-<style id="phase3-hamburger-reset">
-  /* Hard reset so remote CSS can't style the button differently */
-  #menuBtn {
-    all: unset !important;
-    position: absolute !important;
-    top: 10px !important;
-    left: 10px !important;
-    width: 44px !important;
-    height: 44px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    z-index: 2147483647 !important;
     -webkit-appearance: none !important;
     appearance: none !important;
     background: transparent !important;
     border: 0 !important;
     outline: 0 !important;
     box-shadow: none !important;
-    filter: none !important;
-    backdrop-filter: none !important;
-    border-radius: 0 !important;
-    -webkit-tap-highlight-color: transparent !important;
-    touch-action: manipulation !important;
-    pointer-events: auto !important;
-    color: #ffffff !important;
-  }
-  #menuBtn::before, #menuBtn::after { content: none !important; }
-  #menuBtn * {
-    all: unset !important;
-    display: block !important;
-    background: transparent !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    outline: 0 !important;
-  }
-  #menuBtn svg {
-    width: 24px !important;
-    height: 24px !important;
-    stroke: currentColor !important;
   }
 </style>
-<script id="phase3-hamburger-reinforce">
+<script id="hamburger_min_forwarder">
 (function(){
   var btn = document.getElementById('menuBtn');
   if (!btn) return;
 
-  // Remove any passive or duplicate listeners by cloning
-  var clone = btn.cloneNode(true);
-  btn.parentNode.replaceChild(clone, btn);
-  btn = clone;
+  // Create a fixed, high-z tap mirror that forwards events to the real button
+  var mirror = document.createElement('button');
+  mirror.id = 'menuBtnTapMirror';
+  mirror.setAttribute('aria-hidden','true');
+  var s = mirror.style;
+  s.position = 'fixed';
+  s.width = '52px';
+  s.height = '52px';
+  s.zIndex = '2147483647';
+  s.background = 'transparent';
+  s.border = '0';
+  s.padding = '0';
+  s.margin = '0';
+  s.outline = 'none';
+  s.boxShadow = 'none';
+  s.WebkitTapHighlightColor = 'transparent';
+  s.touchAction = 'manipulation';
+  s.cursor = 'pointer';
+  s.pointerEvents = 'auto';
+  s.opacity = '0'; // invisible, does not change visuals
 
-  function openMenu() {
-    var sheet = document.getElementById('menuSheet');
-    if (!sheet) {
-      sheet = document.createElement('div');
-      sheet.id = 'menuSheet';
-      sheet.className = 'menu-overlay show';
-      sheet.innerHTML = '<div class="menu-backdrop"></div><div id="menuModal" class="menu-card"></div>';
-      document.body.appendChild(sheet);
-    }
-    sheet.classList.add('show');
-    sheet.classList.remove('hidden');
-    sheet.removeAttribute('hidden');
-    sheet.setAttribute('aria-hidden','false');
+  document.body.appendChild(mirror);
+
+  function sync(){
+    var r = btn.getBoundingClientRect();
+    if (!r.width || !r.height) { return; }
+    mirror.style.left = (r.left - 4) + 'px';
+    mirror.style.top  = (r.top  - 4) + 'px';
+  }
+  ['load','resize','scroll','orientationchange'].forEach(function(ev){
+    window.addEventListener(ev, sync, {passive:true});
+  });
+  var mo = new MutationObserver(sync);
+  mo.observe(document.documentElement, {subtree:true, attributes:true, childList:true});
+  sync();
+
+  function forward(evType, srcEv){
+    var evt = new MouseEvent(evType, {
+      bubbles: true,
+      cancelable: true,
+      view: window
+    });
+    btn.dispatchEvent(evt);
   }
 
-  ['pointerdown','touchstart','click'].forEach(function(type){
-    btn.addEventListener(type, function(e){
+  // Forward primary gestures to the original button (do not stop propagation globally)
+  ['pointerdown','touchstart','click'].forEach(function(t){
+    mirror.addEventListener(t, function(e){
       e.preventDefault();
-      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
       e.stopPropagation();
-      openMenu();
+      forward('click', e); // rely on your original click handler
     }, {capture:true, passive:false});
   });
 })();
 </script>
-<style id="phase3-no-clip">
-  #sec-assignment, #sec-assignment * {
-    transform: none !important;
-  }
-  #sec-assignment .assign-header {
-    overflow: visible !important;
-  }
-  /* Ensure the button sits on top and is easy to hit */
-  #menuBtn {
-    position: absolute !important;
-    top: 10px !important;
-    left: 10px !important;
-    width: 44px !important;
-    height: 44px !important;
-    z-index: 2147483647 !important;
-    pointer-events: auto !important;
-    -webkit-tap-highlight-color: transparent !important;
-    touch-action: manipulation !important;
-  }
-  /* Prevent any overlay/backdrop from intercepting taps near the header */
-  .menu-overlay, .menu-backdrop {
-    pointer-events: none !important;
-  }
-  /* But the actual menu card uses events when shown */
-  .menu-card {
-    pointer-events: auto !important;
-  }
-</style>
 </body>
 </html>
