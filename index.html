@@ -1698,13 +1698,7 @@ html { overflow-anchor: none !important; }
   #sec-assignment .assign-header * { pointer-events: none !important; }
   #menuBtn, #menuBtn * { pointer-events: auto !important; }
 </style>
-<style id="phase3-layout-tune">
-  /* Slightly enlarge inner phone canvas without changing outer frame */
-  .phone-canvas, .iphone-screen, .device .screen, .phone, #app, .app-root {
-    transform: scale(1.03) !important;
-    transform-origin: top left !important;
-  }
-</style>
+
 <script id="phase3-hamburger-svg">
 (function(){
   var btn = document.getElementById('menuBtn');
@@ -1827,5 +1821,33 @@ html { overflow-anchor: none !important; }
   });
 })();
 </script>
+<style id="phase3-no-clip">
+  #sec-assignment, #sec-assignment * {
+    transform: none !important;
+  }
+  #sec-assignment .assign-header {
+    overflow: visible !important;
+  }
+  /* Ensure the button sits on top and is easy to hit */
+  #menuBtn {
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    width: 44px !important;
+    height: 44px !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+  }
+  /* Prevent any overlay/backdrop from intercepting taps near the header */
+  .menu-overlay, .menu-backdrop {
+    pointer-events: none !important;
+  }
+  /* But the actual menu card uses events when shown */
+  .menu-card {
+    pointer-events: auto !important;
+  }
+</style>
 </body>
 </html>
