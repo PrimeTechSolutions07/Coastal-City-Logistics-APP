@@ -638,7 +638,9 @@ html, body, .iphone, .screen, #sec-assignment, .brand-grad {
     card.appendChild(makeBtn('Yard Move','yard'));
     card.appendChild(makeBtn('Break Down','breakdown'));
 
-    host.appendChild(overlay);
+    
+    card.appendChild(makeHr());
+    card.appendChild(makeBtn('End Trip','endtrip'));host.appendChild(overlay);
     menuSheet = overlay;
     return menuSheet;
   }
