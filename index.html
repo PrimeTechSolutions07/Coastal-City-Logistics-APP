@@ -638,9 +638,7 @@ html, body, .iphone, .screen, #sec-assignment, .brand-grad {
     card.appendChild(makeBtn('Yard Move','yard'));
     card.appendChild(makeBtn('Break Down','breakdown'));
 
-    
-    card.appendChild(makeHr());
-    card.appendChild(makeBtn('End Trip','endtrip'));host.appendChild(overlay);
+    host.appendChild(overlay);
     menuSheet = overlay;
     return menuSheet;
   }
@@ -1731,315 +1729,120 @@ html { overflow-anchor: none !important; }
   });
 })();
 </script>
-
-<!-- ===== CCL PATCH: Shift start/accrual + End Trip (non-invasive) ===== -->
-
-
-
-
-<script id="ccl-shift-endtrip-patch">
+<script>
+/* endtrip-inject-route.v3.js — non-invasive
+   Ensures an "End Trip" row exists in the menu and routes it EXACTLY like Home.
+   No edits to your app code. iPhone/Safari safe.
+*/
 (function(){
-  if (window.__cclShiftPatchAppliedV5) return; 
-  window.__cclShiftPatchAppliedV5 = true;
+  var LABEL = 'End Trip';
 
-  function byId(id){ return document.getElementById(id); }
-  function nowMs(){ return Date.now(); }
-  function fmtMs(ms){
-    var s = Math.floor(ms/1000);
-    var h = Math.floor(s/3600); s -= h*3600;
-    var m = Math.floor(s/60);
-    return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+  function txt(el){ return (el && (el.textContent||el.innerText)||'').trim(); }
+  function isEndTrip(el){ return txt(el).toLowerCase() === LABEL.toLowerCase(); }
+
+  function findMenuSheet(){ return document.getElementById('menuSheet'); }
+  function findMenuList(sheet){
+    if (!sheet) return null;
+    return sheet.querySelector('.menu-list') || sheet.querySelector('.menu-card') || sheet;
   }
-  function toast(msg){
+  function hasEndTrip(list){
+    if(!list) return false;
+    var nodes = list.querySelectorAll('.menu-item, [data-action], [data-act]');
+    for (var i=0;i<nodes.length;i++){ if (isEndTrip(nodes[i])) return true; }
+    return false;
+  }
+  function insertEndTrip(list){
+    if (!list || hasEndTrip(list)) return;
     try{
-      var t=document.createElement('div'); t.textContent=msg;
-      t.style.cssText='position:fixed;left:50%;transform:translate(-50%,0);bottom:18px;background:#0b1220;color:#dbeafe;border:1px solid #23324a;border-radius:12px;padding:8px 14px;z-index:100001;box-shadow:0 10px 30px rgba(0,0,0,.35);font:14px system-ui,-apple-system,Segoe UI,Roboto';
-      document.body.appendChild(t); setTimeout(function(){t.remove();},1600);
-    }catch(e){}
-  }
-  function getEmpId(){
-    var el = byId('lblEmpId');
-    return el && (el.textContent||'').trim();
-  }
-  function emit(name, detail){
-    try{ window.dispatchEvent(new CustomEvent(name,{detail:detail||{}})); }catch(e){}
-  }
-  var _tickTimer=null;
-  function startAccrualLoop(empId, startedAt){
-    if (_tickTimer) clearInterval(_tickTimer);
-    _tickTimer = setInterval(function(){
-      var elapsed = nowMs() - startedAt;
-      emit('driver:accrued-tick', { empId: empId, startedAt: startedAt, elapsedMs: elapsed, hhmm: fmtMs(elapsed) });
-      if (window.__onAccruedTick) { try{ window.__onAccruedTick(empId, startedAt, elapsed); }catch(e){} }
-    }, 30000);
-    var elapsed0 = nowMs() - startedAt;
-    emit('driver:accrued-tick', { empId: empId, startedAt: startedAt, elapsedMs: elapsed0, hhmm: fmtMs(elapsed0) });
-  }
-  function stopAccrualLoop(){ if (_tickTimer){ clearInterval(_tickTimer); _tickTimer=null; } }
-
-  function keyStart(id){ return 'ccl_shift_start_'+(id||''); }
-  function beginShift(){
-    var empId = getEmpId(); if (!empId) return;
-    var startedAt = nowMs();
-    try{ sessionStorage.setItem(keyStart(empId), String(startedAt)); }catch(_){}
-    if (window.__dispatchBeginShift) { try{ window.__dispatchBeginShift(empId, startedAt); }catch(e){} }
-    emit('driver:shift', { empId: empId, status:'BEGIN', startedAt: startedAt });
-    startAccrualLoop(empId, startedAt);
-    toast('Shift started');
-  }
-  function endTripConfirm(){
-    var empId = getEmpId();
-    var startedStr = empId && sessionStorage.getItem(keyStart(empId));
-    var startedAt = startedStr ? parseInt(startedStr,10) : null;
-
-    var overlay = document.createElement('div');
-    overlay.id='ccl-endtrip-modal';
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100003;backdrop-filter:blur(4px)';
-    overlay.innerHTML = '<div style="background:#0f172a;border:1px solid #334155;border-radius:16px;padding:20px;width:min(92vw,420px);box-shadow:0 24px 60px rgba(0,0,0,.4);color:#e5e7eb">'
-      + '<h3 style="font-size:18px;font-weight:800;margin:0 0 8px 0">End Trip?</h3>'
-      + '<p style="color:#cbd5e1;font-size:14px;margin:0 0 16px 0">Notify dispatch and stop accrued hours.</p>'
-      + '<div style="display:flex;gap:12px">'
-      +   '<button data-ccl="cancel" style="flex:1;padding:10px 0;border-radius:12px;background:#475569;color:#fff;border:none">Cancel</button>'
-      +   '<button data-ccl="ok" style="flex:1;padding:10px 0;border-radius:12px;background:#2563eb;color:#fff;border:none">Confirm</button>'
-      + '</div></div>';
-    document.body.appendChild(overlay);
-
-    overlay.addEventListener('click', function(e){
-      var t=e.target && e.target.getAttribute('data-ccl');
-      if (t==='cancel'){ overlay.remove(); }
-      if (t==='ok'){
-        overlay.remove();
-        var endedAt = nowMs();
-        var elapsed = startedAt ? (endedAt - startedAt) : 0;
-        stopAccrualLoop();
-        if (empId){ try{ sessionStorage.removeItem(keyStart(empId)); }catch(_){ } }
-        if (window.__dispatchEndTrip) { try{ window.__dispatchEndTrip(empId, startedAt, endedAt, elapsed); }catch(e){} }
-        emit('driver:shift', { empId: empId, status:'END', startedAt: startedAt, endedAt: endedAt, elapsedMs: elapsed });
-        toast('Trip ended — dispatcher notified');
-        try{
-          var secAuth = byId('sec-auth'), secShift = byId('sec-shift'), secAssign = byId('sec-assignment');
-          if (secAssign) secAssign.classList.add('hidden');
-          if (secShift)  secShift.classList.add('hidden');
-          if (secAuth)   secAuth.classList.remove('hidden');
-        }catch(_){}
-      }
-    }, true);
-  }
-
-  // EXACTLY ONE "End Trip"
-  function candidates(){ 
-    return Array.from(document.querySelectorAll('[data-act="endtrip"], .menu-item[data-action="endtrip"], #ccl-endtrip-btn')); 
-  }
-  function dedupeKeepFirst(){
-    var nodes = candidates();
-    if (nodes.length <= 1) return;
-    var keep = nodes.find(n => n.offsetParent !== null) || nodes[0];
-    nodes.forEach(function(n){
-      if (n === keep) return;
-      try{
-        var prev = n.previousElementSibling;
-        n.remove();
-        if (prev && prev.matches('hr.menu-hr')) prev.remove();
-      }catch(_){}
-    });
-  }
-
-  function findPhase3MenuContainer(){
-    // Look for a parent that contains buttons labeled like your menu
-    var labels = ['Home','Complete','Take Photo','Yard Move','Break Down'];
-    var btns = Array.from(document.querySelectorAll('button, .menu-item')).filter(function(b){
-      var t = (b.textContent||'').trim();
-      return labels.includes(t);
-    });
-    if (!btns.length) return null;
-    // choose the deepest common ancestor among first group
-    function ancestors(el){
-      var list=[]; while(el){ list.push(el); el=el.parentElement; } return list;
-    }
-    var sets = btns.map(ancestors);
-    var common = sets[0].find(function(node){
-      return sets.every(arr => arr.includes(node));
-    });
-    // ensure it actually contains most of the labels
-    if (common){
-      var has = labels.filter(l => common.querySelector('*:not(script):not(style)')).length;
-      return common;
-    }
-    // fallback: parent of the last item ('Break Down')
-    var last = btns.find(b => (b.textContent||'').trim()==='Break Down');
-    return last ? last.parentElement : btns[0].parentElement;
-  }
-
-  function ensureOne(){
-    var nodes = candidates();
-    if (nodes.length === 0){
-      var container = findPhase3MenuContainer();
-      if (container){
-        var sep = document.createElement('hr'); sep.className='menu-hr';
-        var btn = document.createElement('button');
-        btn.id='ccl-endtrip-btn'; btn.type='button'; btn.className='menu-item';
-        btn.setAttribute('data-action','endtrip'); btn.setAttribute('data-act','endtrip');
-        btn.textContent='End Trip';
-        btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); endTripConfirm(); }, true);
-        try{ container.appendChild(sep); container.appendChild(btn); }catch(_){}
-      }
-    } else {
-      dedupeKeepFirst();
-    }
-  }
-
-  // Global delegated handler
-  document.addEventListener('click', function(e){
-    var el = e.target;
-    for (var i=0;i<5 && el;i++, el=el.parentElement){
-      if (el && el.matches && el.matches('.menu-item[data-action="endtrip"], [data-act="endtrip"], #ccl-endtrip-btn')){
-        e.preventDefault(); e.stopPropagation();
-        endTripConfirm();
-        return;
-      }
-    }
-  }, true);
-
-  // Hook Begin Shift
-  function bindBegin(){
-    var btn = byId('btnBegin');
-    if (!btn){
-      var allBtns = Array.from(document.querySelectorAll('button'));
-      btn = allBtns.find(b => (b.textContent||'').trim().toLowerCase()==='begin shift');
-    }
-    if (!btn || btn.dataset.cclBound) return;
-    btn.dataset.cclBound='1';
-    btn.addEventListener('click', function(){ setTimeout(beginShift, 0); }, true);
-  }
-
-  function resumeIfAny(){
-    var empId = getEmpId();
-    if (!empId) return;
-    var startedStr = sessionStorage.getItem(keyStart(empId));
-    var startedAt = startedStr ? parseInt(startedStr,10) : NaN;
-    if (startedAt && !isNaN(startedAt)){ startAccrualLoop(empId, startedAt); }
-  }
-
-  var mo = new MutationObserver(function(){ ensureOne(); });
-  mo.observe(document.documentElement, {subtree:true, childList:true});
-
-  setInterval(function(){ try{ ensureOne(); }catch(_){ } }, 800);
-
-  document.addEventListener('DOMContentLoaded', function(){
-    bindBegin();
-    resumeIfAny();
-    ensureOne();
-  });
-})();
-</script>
-
-
-
-
-<!-- ===== End CCL PATCH ===== -->
-
-<!-- SAFEGUARD: Persistent on-shift routing (skip Phase 2) -->
-<script id="safeguard-onshift-route">
-(function(){
-  var ID_AUTH='sec-auth', ID_SHIFT='sec-shift', ID_ASSIGN='sec-assignment';
-  var SHIFT_KEY='ccl_on_shift';
-
-  function sel(id){ return document.getElementById(id); }
-  function hide(el){ if(!el) return; el.classList.add('hidden'); el.setAttribute('hidden','hidden'); el.style.display='none'; }
-  function show(el){ if(!el) return; el.classList.remove('hidden'); el.removeAttribute('hidden'); el.style.display=''; }
-  function showPhase3Only(){ hide(sel(ID_AUTH)); hide(sel(ID_SHIFT)); show(sel(ID_ASSIGN)); }
-
-  // 1) When driver taps Begin Shift, persist "on shift"
-  document.addEventListener('DOMContentLoaded', function(){
-    try{
-      var btnBegin = document.getElementById('btnBegin');
-      if(btnBegin && !btnBegin.dataset.onShiftBound){
-        btnBegin.dataset.onShiftBound='1';
-        btnBegin.addEventListener('click', function(){ try{ sessionStorage.setItem(SHIFT_KEY,'1'); }catch(_){} });
-      }
-    }catch(_){}
-  });
-
-  // 2) If already on shift, always land on Phase 3 only (e.g., after Home)
-  function enforceIfOnShift(){
-    try{
-      var on = (sessionStorage.getItem(SHIFT_KEY) === '1');
-      if(on){ showPhase3Only(); }
+      // Divider like others
+      var hr = document.createElement('hr');
+      hr.className = 'menu-hr';
+      list.appendChild(hr);
+      // Button
+      var b = document.createElement('button');
+      b.className = 'menu-item';
+      // Route like HOME so your existing router handles it
+      b.setAttribute('data-action','home');
+      b.setAttribute('data-act','home');
+      b.textContent = LABEL;
+      list.appendChild(b);
     }catch(_){}
   }
+  function ensureEndTrip(){
+    var sheet = findMenuSheet();
+    if (!sheet) return;
+    var list  = findMenuList(sheet);
+    insertEndTrip(list);
+  }
 
-  // run ASAP, on DOM ready, and after small delays (to beat other listeners)
-  enforceIfOnShift();
+  // keep trying briefly (covers late builders)
+  function kickEnsure(){
+    ensureEndTrip();
+    setTimeout(ensureEndTrip, 0);
+    setTimeout(ensureEndTrip, 60);
+    setTimeout(ensureEndTrip, 150);
+    setTimeout(ensureEndTrip, 300);
+  }
+
+  // Run once when DOM is ready
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ enforceIfOnShift(); setTimeout(enforceIfOnShift, 50); setTimeout(enforceIfOnShift, 200); });
+    document.addEventListener('DOMContentLoaded', kickEnsure, {once:true});
   } else {
-    setTimeout(enforceIfOnShift, 50);
-    setTimeout(enforceIfOnShift, 200);
+    kickEnsure();
   }
 
-  // 3) Force Home to respect on-shift (without changing original code paths)
-  function homeBypassOnShift(e){
+  // Observe for menu open / DOM changes
+  var mo = new MutationObserver(function(){
+    var sheet = findMenuSheet();
+    if (sheet && sheet.classList && sheet.classList.contains('show')) kickEnsure();
+  });
+  try{ mo.observe(document.documentElement, {subtree:true, childList:true, attributes:true, attributeFilter:['class']}); }catch(_){}
+
+  // Routing: force-close menu then call existing Home logic
+  function strongCloseMenu(){
+    try{ if (typeof closeMenu === 'function'){ closeMenu(); return; } }catch(_){}
     try{
-      var on = (sessionStorage.getItem(SHIFT_KEY) === '1');
-      if(!on) return; // if not on shift, let original Home proceed
-      if(e){ if (e.stopImmediatePropagation) e.stopImmediatePropagation(); e.preventDefault(); e.stopPropagation(); }
-      // close overlay if present
-      try{
-        var s=document.getElementById('menuSheet');
-        if(s){ s.classList.remove('show'); s.classList.add('hidden'); s.setAttribute('hidden','hidden'); s.setAttribute('aria-hidden','true'); }
-      }catch(_){}
-      // ensure Phase 3 only
-      showPhase3Only();
-      // short observer in case other code re-toggles visibility right after
-      try{
-        var until = Date.now()+800;
-        var mo = new MutationObserver(function(){
-          if(Date.now()>until){ try{ mo.disconnect(); }catch(_){ } return; }
-          showPhase3Only();
-        });
-        mo.observe(document.documentElement||document.body, {attributes:true, attributeFilter:['class','hidden','style'], subtree:true, childList:true});
-        setTimeout(function(){ try{ mo.disconnect(); }catch(_){} }, 1000);
-      }catch(_){}
-      try{ if(typeof toast==='function') toast('Returned to Assignments'); }catch(_){}
+      var s = findMenuSheet();
+      if (!s) return;
+      s.classList.remove('show');
+      s.classList.add('hidden');
+      s.setAttribute('hidden','hidden');
+      s.setAttribute('aria-hidden','true');
+    }catch(_){}
+  }
+  function goHome(){
+    strongCloseMenu();
+    try{ if (typeof handleHome === 'function'){ handleHome(); return; } }catch(_){}
+    // Fallback: show Phase 1 section
+    try{
+      var A=document.getElementById('sec-auth'), S=document.getElementById('sec-shift'), P=document.getElementById('sec-assignment');
+      if(P) P.classList.add('hidden'); if(S) S.classList.add('hidden'); if(A) A.classList.remove('hidden');
     }catch(_){}
   }
 
-  // Bind to actual Home item(s) inside the overlay
-  function bindHome(){
-    var sheet = document.getElementById('menuSheet');
-    if(!sheet || sheet.dataset.onShiftHomeBound==='1') return;
-    var delegate = function(e){
-      var el = e.target && (e.target.closest ? e.target.closest('.menu-item') : null);
-      if(!el) return;
-      var isHome = (el.dataset && (el.dataset.action==='home' || el.dataset.act==='home')) || /(^|\s)home(\s|$)/i.test(el.textContent || '');
-      if(!isHome) return;
-      homeBypassOnShift(e);
-    };
-    sheet.addEventListener('click', delegate, true);
-    sheet.addEventListener('touchend', delegate, {capture:true, passive:false});
-    sheet.dataset.onShiftHomeBound='1';
+  // Capture-phase intercept just for End Trip (robust on iPhone)
+  function closestMenuItem(t){
+    var el = t;
+    for (var i=0;i<6 && el;i++, el=el.parentElement){
+      if (el.matches && el.matches('#menuSheet .menu-item, #menuSheet [data-action], #menuSheet [data-act]')) return el;
+    }
+    return null;
   }
-  try{ bindHome(); }catch(_){}
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ try{ bindHome(); }catch(_){ } }, {once:true});
-  } else {
-    try{ bindHome(); }catch(_){}
+  function onTap(e){
+    try{
+      var item = closestMenuItem(e.target);
+      if (!item) return;
+      if (!isEndTrip(item)) return;
+      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      if (e.stopPropagation) e.stopPropagation();
+      if (e.preventDefault) e.preventDefault();
+      goHome();
+    }catch(_){}
   }
-  try{
-    new MutationObserver(function(){ try{ bindHome(); }catch(_){}}).observe(document.documentElement||document.body, {childList:true, subtree:true});
-  }catch(_){}
-
-  // 4) Also expose a global hook so any code calling handleHome() respects on-shift
-  try{
-    var origHandleHome = window.handleHome;
-    window.handleHome = function(e){
-      var on = false;
-      try{ on = (sessionStorage.getItem(SHIFT_KEY)==='1'); }catch(_){}
-      if(on){ return homeBypassOnShift(e); }
-      if (typeof origHandleHome === 'function') return origHandleHome.apply(this, arguments);
-    };
-  }catch(_){}
+  document.addEventListener('touchstart', onTap, {capture:true, passive:false});
+  document.addEventListener('click', onTap, true);
 })();
+
 </script>
 </body>
 </html>
