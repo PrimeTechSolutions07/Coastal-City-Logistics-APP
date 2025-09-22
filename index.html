@@ -101,7 +101,7 @@ window.addEventListener('DOMContentLoaded', function(){
   setText('f_from', 'BBT → Yusen Logistics\n(Torrance)');
   setText('f_loadin', 'YTI');
   setText('f_container', 'TCLU2948209');
-  setText('f_appt', '671867');
+  setText('f_appt', );
   setText('f_window', '08–09 AM');
   const instr = document.getElementById('f_instruction'); if(instr) instr.textContent='Chassis back to Compton yard';
   const bk = document.getElementById('f_bk_input'); if(bk && !bk.value) bk.value='RICFGP034400';
@@ -457,7 +457,7 @@ html, body, .iphone, .screen, #sec-assignment, .brand-grad {
 
     const btnBegin=document.getElementById('btnBegin');btnBegin.addEventListener('click',()=>{secShift.classList.add('hidden');secAssign.classList.remove('hidden');populateAssignments()});
 
-    const assignments=[{id:'CCL-4821',window:'08–09 AM',from:'BBT → Yusen Logistics (Torrance)',loadin:'YTI',container:'TCLU2948209',appt:'671867',bk:'RICFGP034400',instruction:'Chassis back to Compton yard'}];
+    const assignments=[{id:'CCL-4821',window:'08–09 AM',from:'BBT → Yusen Logistics (Torrance)',loadin:'YTI',container:'TCLU2948209',appt:'Empty',bk:'RICFGP034400',instruction:'Chassis back to Compton yard'}];
     const assignmentSelect=document.getElementById('assignmentSelect');const fields={from:document.getElementById('f_from'),loadin:document.getElementById('f_loadin'),container:document.getElementById('f_container'),appt:document.getElementById('f_appt'),bk:document.getElementById('f_bk'),window:document.getElementById('f_window'),instruction:document.getElementById('f_instruction')};
     function populateAssignments(){assignmentSelect.innerHTML=assignments.map((a,i)=>`<option value="${i}">Job #${a.id} • ${a.window}</option>`).join('');setAssignment(0)}
     function setAssignment(i){const a=assignments[i];fields.from.textContent=a.from;fields.loadin.textContent=a.loadin;fields.container.textContent=a.container;fields.appt.textContent=a.appt;fields.bk.textContent=a.bk;fields.window.textContent=a.window;fields.instruction.textContent=a.instruction}
