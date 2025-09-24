@@ -95,16 +95,16 @@ window.addEventListener('DOMContentLoaded', function(){
   // Prefill (demo only)
   const sel = document.getElementById('assignmentSelect');
   if(sel && !sel.options.length){
-    sel.innerHTML = '<option>Job #CCL-4821 • 08–09 AM</option>';
+    sel.innerHTML = '<option>Job # CCL-5001</option>';
   }
   const setText = (id, v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-  setText('f_from', 'BBT → Yusen Logistics\n(Torrance)');
-  setText('f_loadin', 'YTI');
+  setText('f_from', 'Long Beach Port');
+  setText('f_loadin', 'Yusen Logistics ( Torrance)');
   setText('f_container', 'TCLU2948209');
-  setText('f_appt', );
+  setText('f_appt','Empty');
   setText('f_window', '08–09 AM');
   const instr = document.getElementById('f_instruction'); if(instr) instr.textContent='Chassis back to Compton yard';
-  const bk = document.getElementById('f_bk_input'); if(bk && !bk.value) bk.value='RICFGP034400';
+  const bk = document.getElementById('f_bk_input'); if(bk && !bk.value) bk.value='';
 
   // Modal plumbing
   const modal = document.getElementById('actionModal');
@@ -457,10 +457,25 @@ html, body, .iphone, .screen, #sec-assignment, .brand-grad {
 
     const btnBegin=document.getElementById('btnBegin');btnBegin.addEventListener('click',()=>{secShift.classList.add('hidden');secAssign.classList.remove('hidden');populateAssignments()});
 
-    const assignments=[{id:'CCL-4821',window:'08–09 AM',from:'BBT → Yusen Logistics (Torrance)',loadin:'YTI',container:'TCLU2948209',appt:'Empty',bk:'RICFGP034400',instruction:'Chassis back to Compton yard'}];
-    const assignmentSelect=document.getElementById('assignmentSelect');const fields={from:document.getElementById('f_from'),loadin:document.getElementById('f_loadin'),container:document.getElementById('f_container'),appt:document.getElementById('f_appt'),bk:document.getElementById('f_bk'),window:document.getElementById('f_window'),instruction:document.getElementById('f_instruction')};
-    function populateAssignments(){assignmentSelect.innerHTML=assignments.map((a,i)=>`<option value="${i}">Job #${a.id} • ${a.window}</option>`).join('');setAssignment(0)}
-    function setAssignment(i){const a=assignments[i];fields.from.textContent=a.from;fields.loadin.textContent=a.loadin;fields.container.textContent=a.container;fields.appt.textContent=a.appt;fields.bk.textContent=a.bk;fields.window.textContent=a.window;fields.instruction.textContent=a.instruction}
+    const assignments=[{id:'CCL-5001',from:'Long Beach Port',loadin:'Yusen Logistics (Torrance)',container:'TCLU2948209',appt:'Empty',bk:'',instruction:'Chassis back to Compton yard'},{id:'CCL-5002',from:'LBCT',loadin:'Evergreen',container:'EGLV1234567',appt:'Load',bk:'BK998877',instruction:'Return chassis to Wilmington yard'}];
+    const assignmentSelect=document.getElementById('assignmentSelect');const fields={from:document.getElementById('f_from'),loadin:document.getElementById('f_loadin'),container:document.getElementById('f_container'),appt:document.getElementById('f_appt'),bk: document.getElementById('f_bk_input'),window:document.getElementById('f_window'),instruction:document.getElementById('f_instruction')};
+    function populateAssignments(){assignmentSelect.innerHTML=assignments.map((a,i)=>`<option value="${i}">Job # ${a.id}</option>`).join('');setAssignment(0)}
+    function setAssignment(i){
+  const a = assignments[i];
+  function setVal(el, val){
+    if(!el) return;
+    if (el.tagName && el.tagName.toLowerCase()==='input'){ el.value = val || ''; }
+    else { el.textContent = val || '—'; }
+  }
+  setVal(fields.from, a.from);
+  setVal(fields.loadin, a.loadin);
+  setVal(fields.container, a.container);
+  setVal(fields.appt, a.appt);
+  setVal(fields.bk, a.bk);
+  setVal(fields.window, a.window);
+  setVal(fields.instruction, a.instruction);
+}
+
     assignmentSelect.addEventListener('change',e=>setAssignment(e.target.value));
   </script>
 <!-- BK Confirm Modal --><div id="bkModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50"><div style="background:#0f172a;border:1px solid #334155;border-radius:16px;padding:20px;width:85%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.35);color:#fff;"><h3 class="text-white text-lg font-semibold mb-1">Confirm Seal #</h3><p class="text-slate-300 text-sm mb-4">Please confirm this BK number is correct:</p><div class="text-white font-bold text-xl mb-5" id="bkConfirmValue">—</div><div class="flex gap-3"><button id="bkEdit" class="flex-1 py-2 rounded-xl bg-slate-700 text-white">Edit</button><button id="bkConfirm" class="flex-1 py-2 rounded-xl bg-blue-600 text-white">Confirm</button></div></div></div>
@@ -597,7 +612,7 @@ html, body, .iphone, .screen, #sec-assignment, .brand-grad {
     if(!assignmentSelect) return '';
     var opt = assignmentSelect.options[assignmentSelect.selectedIndex];
     if(!opt) return '';
-    var m = /Job #([^\s•]+)/.exec(opt.textContent || '');
+    var m = /Job\s*#\s*([^\s•]+)/.exec(opt.textContent || '');
     return m ? m[1] : '';
   }
 
@@ -922,7 +937,7 @@ document.addEventListener('keydown', function(ev){
     try{
       var sel=document.getElementById('assignmentSelect');
       var opt=sel && sel.options[sel.selectedIndex];
-      var m=opt && /Job #([^\s•]+)/.exec(opt.textContent||'');
+      var m=opt && /Job\s*#\s*([^\s•]+)/.exec(opt.textContent||'');
       return (m && m[1]) || '';
     }catch(e){return '';}
   }
@@ -1843,6 +1858,194 @@ html { overflow-anchor: none !important; }
   document.addEventListener('click', onTap, true);
 })();
 
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- === BEGIN: En Route DEMO v11 (maps title not bold + 20% smaller buttons) === -->
+<style>
+/* Base smaller modal (same as v10) */
+.ccx-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+.ccx-backdrop.open{display:flex}
+.ccx-modal{width:min(84vw,400px);background:#0b1422;border:1px solid rgba(59,130,246,.18);border-radius:16px;box-shadow:0 18px 52px rgba(0,0,0,.5),0 0 0 1px rgba(59,130,246,.06) inset;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial}
+.ccx-head{padding:14px 16px 6px;font-size:18px;font-weight:800;letter-spacing:.2px}
+.ccx-body{padding:0 16px 12px;color:#cbd5e1;font-size:14.5px;line-height:1.55;border-bottom:1px solid rgba(148,163,184,.12)}
+.ccx-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 12px}
+/* 20% smaller buttons (48px -> ~38px) */
+.ccx-btn{border:none;border-radius:12px;height:38px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .06s ease,filter .15s ease,background .2s ease}
+.ccx-btn:active{transform:translateY(1px)}
+.ccx-btn.cancel{background:#2b3442;color:#d1d5db}
+.ccx-btn.confirm{background:#2f5bff;color:#fff}
+.ccx-btn.cancel:hover,.ccx-btn.confirm:hover{filter:brightness(1.06)}
+.ccx-body:empty{display:none}
+
+/* Maps confirm: un-bold the title/body only for that modal */
+.ccx-modal.ccx-maps .ccx-head{font-weight:400;letter-spacing:.1px}
+.ccx-modal.ccx-maps .ccx-body{font-size:14px}
+</style>
+<script>
+(function(){
+  const ORIGIN_ADDR = ", 415 W Ocean Blvd, Long Beach, CA 90802";
+  const DEST_ADDR   = "2350 E Dominguez St, Carson, CA 90810"; // Yusen Logistics
+
+  function setDemoVerbiage(){
+    const fromEl = document.getElementById('f_from');
+    const toEl   = document.getElementById('f_loadin');
+    if (fromEl){ if ('value' in fromEl) fromEl.value = ""; else fromEl.textContent = ""; }
+    if (toEl){ if ('value' in toEl) toEl.value = "Yusen Logistics"; else toEl.textContent = "Yusen Logistics"; }
+  }
+
+  function ensureModal(){
+    let b = document.getElementById('ccxBackdrop');
+    if (b) return b;
+    b = document.createElement('div');
+    b.id = 'ccxBackdrop';
+    b.className = 'ccx-backdrop';
+    b.innerHTML = `
+      <div class="ccx-modal" role="dialog" aria-modal="true" aria-labelledby="ccxTitle">
+        <div class="ccx-head" id="ccxTitle">Confirm</div>
+        <div class="ccx-body" id="ccxMsg"></div>
+        <div class="ccx-actions">
+          <button class="ccx-btn cancel" id="ccxCancel">Cancel</button>
+          <button class="ccx-btn confirm" id="ccxOk">Confirm</button>
+        </div>
+      </div>`;
+    document.body.appendChild(b);
+    return b;
+  }
+
+  function promptModal({title, message, okText="Confirm", cancelText="Cancel", onConfirm, variant}){
+    const b = ensureModal();
+    const modal = b.querySelector('.ccx-modal');
+    const t = b.querySelector('#ccxTitle');
+    const m = b.querySelector('#ccxMsg');
+    const ok = b.querySelector('#ccxOk');
+    const cancel = b.querySelector('#ccxCancel');
+
+    // Variant class for maps (to de-bold title)
+    if (variant === "maps") modal.classList.add('ccx-maps'); else modal.classList.remove('ccx-maps');
+
+    t.textContent = title || "Confirm";
+    m.textContent = message || "";
+    ok.textContent = okText;
+    cancel.textContent = cancelText;
+
+    return new Promise((resolve)=>{
+      function close(val){
+        ok.removeEventListener('click', onOk, true);
+        cancel.removeEventListener('click', onCancel, true);
+        b.classList.remove('open'); document.body.style.overflow='';
+        resolve(val);
+      }
+      function onOk(e){ e.stopPropagation(); if (typeof onConfirm==='function'){ try{ onConfirm(); }catch(_){} } close(true); }
+      function onCancel(e){ e.stopPropagation(); close(false); }
+
+      ok.addEventListener('click', onOk, true);
+      cancel.addEventListener('click', onCancel, true);
+      document.body.style.overflow='hidden';
+      b.classList.add('open');
+    });
+  }
+
+  function getFieldText(id){ const el = document.getElementById(id); if(!el) return ""; return ('value' in el? (el.value||'').trim() : (el.textContent||'').trim()); }
+  function getSelectedText(id){ const s=document.getElementById(id); const o=s&&s.options?s.options[s.selectedIndex]:null; return o?(o.textContent||''):""; }
+  function getCurrentAssignment(){
+    const jobLabel = getSelectedText('assignmentSelect');
+    const m = /Job\s*#\s*([^\s•]+)/.exec(jobLabel||"");
+    const jobId = (m?m[1]:(getFieldText('f_jobid')||'')).replace(/^#?/,'');
+    const cont = getFieldText('f_container'); const win = getFieldText('f_window');
+    return { jobId, cont, win };
+  }
+
+  async function notifyBackend(payload){
+    if (typeof window.__sendEnrouteNotify === 'function') return await window.__sendEnrouteNotify(payload);
+    return { ok:true, demo:true };
+  }
+
+  function openMaps(){
+    const url = "https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(ORIGIN_ADDR)+"&destination="+encodeURIComponent(DEST_ADDR)+"&travelmode=driving";
+    window.open(url, "_blank");
+  }
+
+  async function handleEnroute(){
+    const job = getCurrentAssignment();
+    const ok = await promptModal({ title:"Confirm En Route?", message:"Mark En Route and notify the customer?", okText:"Confirm", cancelText:"Cancel" });
+    if (!ok) return;
+    try { await notifyBackend({ ...job, origin:ORIGIN_ADDR, destination:DEST_ADDR, message:"Driver is on his way" }); } catch(_){}
+    showMapsChooser(getToAddress());
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setDemoVerbiage();
+    const btn = document.getElementById('btnEnRoute') || document.querySelector('[data-action="enroute"]');
+    if (btn){ btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); handleEnroute(); }, {capture:true}); }
+    document.addEventListener('click', function(e){ const t=e.target; if (!t) return; if (t.matches && t.matches('[data-action="enroute"]')){ e.preventDefault(); handleEnroute(); } }, true);
+  });
+})();
+</script>
+<!-- === END: En Route DEMO v11 (maps title not bold + 20% smaller buttons) === -->
+
+<script>
+(function(){
+  function getToAddress(){
+    var el = document.getElementById('f_loadin');
+    var to = (el && el.textContent || '').trim();
+    return to || 'Destination';
+  }
+  function openAppleMaps(to){
+    window.location.href = 'maps://?daddr=' + encodeURIComponent(to) + '&dirflg=d';
+  }
+  function openGoogleMaps(to){
+    window.location.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(to) + '&travelmode=driving';
+  }
+  function showMapsChooser(to){
+    var exist = document.getElementById('mm_modal_host');
+    if (exist) { try{ exist.remove(); }catch(e){} }
+    var m = document.createElement('div');
+    m.id='mm_modal_host';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:999999;';
+    var card = document.createElement('div');
+    card.style.cssText='background:#0b1324;border:1px solid #2a3343;border-radius:12px;padding:12px;width:90%;max-width:300px;box-shadow:0 20px 60px rgba(0,0,0,.35);color:#e5e7eb';
+    var title = document.createElement('div');
+    title.textContent='Which maps would you like to use?';
+    title.style.cssText='font-size:14px;font-weight:500;margin:0 0 10px 0;color:#e5e7eb';
+    var row = document.createElement('div');
+    row.style.cssText='display:flex;gap:8px;';
+    function mkBtn(t,id,style){ var b=document.createElement('button'); b.id=id; b.textContent=t; b.style.cssText='flex:1;height:36px;border-radius:10px;border:1px solid transparent;font-weight:600;font-size:14px;letter-spacing:.2px;cursor:pointer;'+style; return b; }
+    var bApple  = mkBtn('Apple Maps','mm_apple','background:#2563eb;color:#fff;'); // blue
+    var bGoogle = mkBtn('Google Maps','mm_google','background:#16a34a;color:#fff;'); // green
+    var bCancel = mkBtn('Cancel','mm_cancel','background:transparent;color:#cbd5e1;border-color:#3a465a;margin-top:8px;width:100%;flex:auto;');
+    row.appendChild(bApple); row.appendChild(bGoogle);
+    card.appendChild(title); card.appendChild(row); card.appendChild(bCancel);
+    m.appendChild(card); document.body.appendChild(m);
+    function close(){ try{ m.remove(); }catch(e){} }
+    m.addEventListener('click', function(ev){
+      var id = ev.target && ev.target.id;
+      if (id === 'mm_cancel') close();
+      if (id === 'mm_apple')  { close(); openAppleMaps(to); }
+      if (id === 'mm_google') { close(); openGoogleMaps(to); }
+    }, true);
+  }
+  // Expose globally
+  window.showMapsChooser = showMapsChooser;
+  window.getToAddress = getToAddress;
+})();
 </script>
 </body>
 </html>
